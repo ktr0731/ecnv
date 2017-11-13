@@ -14,11 +14,6 @@ import (
 )
 
 func main() {
-	if len(os.Args) == 1 {
-		fmt.Println("Usage: ecnv image [image ...]")
-		return
-	}
-
 	var out string
 	var x, y uint
 	flag.StringVar(&out, "out", "thumb", "output dir")
@@ -26,10 +21,17 @@ func main() {
 	flag.UintVar(&x, "y", 0, "y size")
 	flag.Parse()
 
-	err := os.Mkdir(out, 0755)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to create dir: %s", err)
+	if flag.NArg() == 0 {
+		fmt.Fprintln(os.Stderr, "please pass jpg images")
 		os.Exit(1)
+	}
+
+	if _, err := os.Stat(out); os.IsNotExist(err) {
+		err := os.MkdirAll(out, 0755)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to create dir: %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -45,7 +47,7 @@ func main() {
 				os.Exit(1)
 			}
 			log.Println("done")
-		}(name)
+		}(filepath.Base(name))
 	}
 
 	wg.Wait()
